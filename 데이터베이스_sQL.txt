@@ -1,0 +1,121 @@
+객체 만들기 
+1. 차량
+create table car(car_num int not null primary key,type varchar(10) not null, year int not null, kilometer int not null,insurance_num int not null, reg_num int not null,reg_name char(10) not null
+reg_tex int not null, warrenty_date date, broker_num int not null, insurance_manager varchar(4), reg_date date not null);
+alter table car add constraint FK_car_ins foreign key (insurance_num)  References insurance(insurance_num);
+alter table car add constraint FK_car_broker foreign key (broker_num)  References broker(broker_num);
+alter table car add constraint FK_car_reg foreign key (reg_num)  References registration(reg_num);
+2.보험사 
+create table insurance(insurance_num int not null primary key, insurance_name varchar(20) not null, insurance_fee int);
+3. 중개업체
+create table broker(broker_num int not null primary key, broker_name varchar(20) not null);
+3-1 중개업체 다중속성 중개인
+create table broker_broker_name(
+broker_name char(4) not null,
+broker_num int not null);
+
+4. 판매사이트 개설
+create table website(site_num int not null primary key, 등록번호 int not null, site_date date not null, name varchar(20) not null, site_manager char(4) not null);
+alter table website add constraint FK_web_reg foreign key (등록번호)  References registration(reg_num);
+5. 차량 등록소
+create table registraion(reg_num int  not null primary key,reg_name char(10) not null, reg_manager char(4) not null);
+ 
+6.차량 정비소 
+
+create table repair_shop(repair_num int  not null primary key, repair_name char(10) not null, repair_manager char(4) not null);
+
+
+
+
+행동 테이블
+1. 중고차 구매 검색
+create table buyer_search(car_num int not null,
+website_num int not null,
+buyer_price int,
+type varchar(10),
+year int);
+2. 매입요청
+create table sell(car_num int not null,
+website_num int not null,
+seller_price int not null,
+type varchar(10) not null
+year int) ;
+
+3. 차량 정비
+ create table check_car(
+ car_num int not null,
+ repair_shop_num int not null);
+3-1 차량 정비 정비일자 다중속성
+create table repair_date(repair_shop_num int not null,
+ repair_date date not null);
+
+
+4. 중개업체 평판등록
+create table broker_rate( 
+broker_rate_num int not null,
+web_num int not null,
+rate int);
+
+투플 넣기 
+보험사
+ insert into insurance values (302,'교보',10000),(301,'삼성생명',15000); 
+차량정비소
+insert into repair_shop values(401,'오토패밀리','김덕배'),(402,'우리차센터','김형철'),(403,'민주카센터','김씨'); 
+차량등록소
+insert into registration values(201,'서울','고명섭'), (202,'부산','고재필'); 
+판매사이트 
+	사업자 등록번호가 101 sk엔카라는 웹사이트를 운영하는 박치영이란 사람이 고명섭이란 사람이 정비소 대표인 등록소에서 대포차조회를 한다.
+	insert into website
+	select 101, registration.reg_num, "2021-01-01",'sk엔카','박치영'
+ 	from registration
+ 	where reg_manager ='고명섭'; 
+
+	사업자 등록번호가 102인 롯데사이트를 운영하는 쥐돌이가 고재필씨가 운영하는 차량등록소에서 대포차를 조회한다.
+	insert into website
+	select 102, registration.reg_num, "2020-01-01",'롯데','쥐돌이'
+ 	from registration
+ 	where reg_manager ='고재필'; 
+
+중개업체 
+미소자동차 등록, 등록번호는 001, 공동중개인 김정인, 김일성
+ insert into broker select 001,'미소자동차';
+insert into broker_broker_name
+select '김정인',broker.broker_num
+from broker
+where broker.broker_name ='미소자동차';
+
+insert into broker_broker_name
+select '김일성',broker.broker_num
+from broker
+where broker.broker_name ='미소자동차';
+고래자동차 등록번호는 002 중개인 steve 
+insert into broker select 002,'고래자동차';
+insert into broker_broker_name
+select '김철수',broker.broker_num
+from broker
+where broker.broker_name ='고래자동차';
+
+
+중개업체 평점등록
+sk엔카에서 고래자동차와 미소자동차는 각각 1점, 4점의 점수를 받았다
+insert into broker_rate select broker.broker_num,website.site_number,1 from broker, website where broker.broker_name ='미소자동차' and website.name ='sk엔카'; 
+insert into broker_rate select broker.broker_num,website.site_number,4 from broker, website where broker.broker_name ='고래자동차' and website.name ='sk엔카'; 
+
+롯데에서 고래자동차는 5점을 받았다.
+insert into broker_rate select broker.broker_num, website.site_number,5 from broker, website where broker.broker_name ='고래자동차' and website.name ='롯데'; 
+
+정비
+insert into check_car select car_num, repair_num from car, repair_shop where car.type = '에쿠스' and repair_shop.repair_name ='우리차센터';
+insert into check_car select car_num, repair_num from car, repair_shop where car.type = 'g70' and repair_shop.repair_name ='우리차센터';
+insert into check_date select repair_shop.repair_num, "2019-03-20" from repair_shop where repair_shop.repair_name ='우리차센터';
+insert into check_date select repair_shop.repair_num, "2020-03-20" from repair_shop where repair_shop.repair_manager ='김형철';
+차량등록
+insert into car select 001,'에쿠스',2007,130000,insurance.insurance_num,registration.reg_num,'김철수',110000,now(),broker.broker_num,'박미영',"2009-03-20" from insurance, registration,broker where insurance.insurance_name ='삼성생명' and broker.broker_name ='고래자동차' and registration.reg_name='서울';
+insert into car select 002,'g70',2019,40000,insurance.insurance_num,registration.reg_num,'김인수',60000,null,broker.broker_num,'김미영',"2020-03-20" from insurance, registration,broker where insurance_name ='교보' and broker.broker_name ='고래자동차' and registration.reg_name='서울';
+매입요청
+insert into sell select car_num,site_number, 20000000,car.type, car.year from car,website where car.type ='에쿠스' and website.name = 'sk엔카';
+insert into sell select car_num,site_number, 20000000,car.type, car.year from car,website where car.type ='g70' and website.name = 'sk엔카';
+구매검색( 차량의 판매가는 매입가격의 1.2배이다)
+insert into buyer_search select sell.car_num,  site_number, sell.seller_price*1.2, sell.type,null  from website,sell where sell.type = 'g70' and website.name = 'sk엔카';
+insert into buyer_search select sell.car_num,  site_number, sell.seller_price*1.2, sell.type,sell.year  from website,sell where sell.type = '에쿠스' and website.name = 'sk엔카'and sell.seller_price <300000000 ;
+
